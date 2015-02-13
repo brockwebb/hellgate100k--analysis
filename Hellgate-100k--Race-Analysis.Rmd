@@ -1,0 +1,737 @@
+---
+title: "Hellgate 100k — Race Analysis"
+author: "brockwebb45@gmail.com"
+date: "February 12, 2015"
+output: pdf_document
+url: https://github.com/brockwebb/hellgate_100k_statistical_analysis
+---
+
+# Synopsis
+The Hellgate 100k is a tough, but rewarding race directed by Dr. David Horton. Taking place around the second week of December in the mountains just north of Roanoke Virginia, this race is known for challenging and unpredictable weather that make each running a unique experience. The goal of this analysis was to look at the data and see if there were any interesting patterns or results to investigate. Also, the basic stats could be used to create a nice info-graphic highlighting Hellgate.
+
+# Methodology
+*Please note: all the data files used and complete source code is available from the github repository at: https://github.com/brockwebb/hellgate_100k_statistical_analysis*
+
+All race time data and weather information was obtained through the referenced web sources, cleaned, and transformed into comma separated value (csv) format for ease in any analysis application. The weather data used was from the Roanoke Regional Airport (Weather Data). No data existed for temperatures at higher elevations like Headforemost Mountain at mile 24/Aid Station 4, which is known as the coldest section of the course when runners reach it before dawn. The Airport data was believed to be the best and most reliable source for this information due to its criticality in aviation safety. Taking windchill in account was done using the average observed wind speed and the lowest observed temperature as an estimate of what was felt on the course, albeit Hellgate has higher elevations, receives more wind exposure at the top of the mountains, and was probably colder.
+
+Normality tests on the data distributions were conducted by applying three methods: Shapiro-Wilk test, Anderson-Darling test, visual inspection of the Q-Q plot. The non-parametric Mann-Whitney U Test was used for all non-normal data comparisons. In all tests, significance was the standard accepted p-value of p<0.05.   
+
+Linear models were used to show best fit whenever appropriate. A second order polynomial was used in one case as the points demonstrated a curved pattern. For the predictive modeling of Hellgate times based on the Beast Series, the step() function was used to attempt the best prediction from the data. Regardless of the R^2 value obtained from the model fit, regression analysis was used to investigate goodness of fit. Regression analysis included an examination of the resulting residual and Q-Q plots for any patterns that would suggest complications or problems with any data fitting models used.
+
+# Results and Conclusions
+All charts and in-depth analysis are found in the Appendix. This section provides a summation of the most salient results and conclusions.
+
+## Male vs. Female Runners
+The age distribution of male and female runners was equivalent (p=0.4879). Overall, males finished faster than females (p=0.00015) with an average time of 15:33:47 to 16:05:47 for the women. The most surprising result was that there were no significant differences between male and female finishing times for the first five years(p=0.2482). After that time, males became significantly faster whereas female times seem to stay similar to previous years (p<0.00016). 
+
+## 2008+ Improvement in Male Finish Times
+The reason for this improvement or trend is still unknown. The improvement effect was also noted in this analysis: "Increase in finishers and improvement of performance of masters runners in the Marathon des Sables" (Jampen SC, Knechtle B, Rust CA, Lepers R & Rosemann T, 2013). Books like *Born to Run* by Christopher McDougall was first published in May 2009, drawing a broader audience into the sport, as well as barefoot running. According to finishing stats from Ultrarunning Magazine, Ultra finishes went from 30,789 in 2008 to 69,573 in 2013 (UltraRunning Magazine, 2013). Overall, the effect may be attributed to an increase in popularity of the sport leading to increased participation that uncovered a wealth of undiscovered talent. 
+
+Several factors were investigated, including looking at the performance of veterans of the race, use of the race committee in applicant screening, and whether or not the Beast Series, which began in 2008, was a factor. The Beast Series did not explain the improvement, but had power in predicting the Hellgate finishing time, covered later in this section. 
+
+The question of whether or not the new race registration procedure of screening applicants is making a difference is undecided because the trend began three years before the introduction of it.  The race committee may be stabilizing the finish percentage or improving the overall time, but the effect requires further study when more data are available.
+
+## Finish Rate
+The early years had a much lower finish rate than the later years. The trend observed implied a "learning curve" and fit a second order polynomial trend-line nicely. Explanations of this learning curve might be due to knowledge of the race, race reports, and potentially the race committee screening procedure. As the improvement in finish times suggests, better prepared runners are showing up and future races are predicted to finish in the low 80's.
+
+## Temperature and Finish Rate
+The warmest start was 2004, but factoring in windchill, 2013 was the warmest year to date. The coldest years were 2007, tied with 2009 (20 degrees F). Factoring in windchill, 2007 was the coldest around 9 degrees F. Temperature appeared to correlate with the finishing percentage, but closer examination of the residual plots revealed non-linear behavior, meaning some other factor was not accounted for in the result.
+
+## Course Conditions
+Runners experienced clear trail conditions six times, ice two time, and snow-ice four times. Course conditions had no significant impact on finishing time (all p>0.05). Overall, the wind direction was to the East five times, North-West three times. 
+
+## Beast Series 
+Beast series runners were not significantly different than their peers as far as finish time are concerned. Only one year, 2011, really looked visually different from the box plots. By Removing the few outliers in 2011, Beast runners finished slower than their peers (p=.0325).
+
+Past performance in the Beast Series was examined to determine how well it could predict a runners finish time at Hellgate. The following equation was found to provide a reasonable estimate of a runner's finish time:
+
+*Hellgate time (predicted) = (-2.948e+04) + (1.897)MMTR.time + (5.684e-01)GS100.time + (-1.128e-05)*MMTR.time*GS100.time * 
+
+Where: MMTR.time and GS100.time are the finish time from each race, in decimal based hours (e.g. h:m:s 16:30:00 = 16.5 hours).
+
+This equation has an adjusted R^2 = .08075 and has decent looking residual plots, confirming the model's validity as a good predictor. 
+
+# Future Study and Investigation
+Future study might include a broader, more in depth look at a runner's experience and preparation before Hellgate. More data and insight into how the Race Committee selects runners from the applicant pool would be helpful in determining its effectiveness. It would be interesting to see if the "learning curve" effect exists for other races and how long it takes to stabilize around a given level. When more data are available, the Hellgate prediction model should be evaluated to measure its robustness. Lastly, it would be prudent to check other race performance data to see if the 2008/2009 time frame kicked off an increase in overall performance throughout the sport. 
+
+
+#Appendix
+The sections below execute are constructed though execution of all the R code and were the basis of the above report. 
+
+# Environment Setup
+## Global Options
+Global options set options for general formatting, including suppressing messages and warnings from the code. There are many messages produced that add length to the document and distract from readability. Also, turning on/off all code, chart sizes, etc. to display results is possible here too. 
+```{r global_options, include=FALSE}
+library(knitr)
+opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=6)
+```
+
+## Data libraries
+The following libraries are used in this analysis:
+1. ggplot2 -- graphics/charts
+2. grid -- layout of charts for display
+3. lubridate -- handling date/time
+4. knitr -- knitr global options for output/file build
+5. nortest -- normality testing  
+6. plyr -- summarization/aggregation 
+```{r}
+library(lubridate); library(ggplot2); library(plyr); library(grid); library(nortest)
+```
+
+## Global Functions
+One global function is used to return the equation and r^2 value that is generated by the linear model for display on graphs using ggplot (Regression Equation)
+```{r}
+# use: before the plot get the formula by calling the function with 
+# eqn <- lm_eqn(subBeast,subBeast$avg.time.before.HG, subBeast$time)
+# add to the ggplot() something like: 
+# + annotate("text",label=eqn,parse=TRUE, x=1000,y=40000)
+lm_eqn = function(lab,df,x,y){
+    m = lm(y ~ x, df);
+    eq <- substitute(sname~":  "~italic(y) == a + b * italic(x)*","~~italic(r)^2~"="~r2, 
+#     eq <- substitute(italic(y) == a + b * italic(x)*","~~italic(r)^2~"="~r2, 
+         list(sname=lab,
+              a = format(coef(m)[1], digits = 3), 
+              b = format(coef(m)[2], digits = 3), 
+             r2 = format(summary(m)$r.squared, digits = 2)))
+    eq <- as.character(as.expression(eq));     
+    return(eq)
+}
+```
+
+## Loading the Data Files
+All the data files used, including this R-Markdown file with complete source code is available from the github repository at: https://github.com/brockwebb/hellgate_100k_statistical_analysis
+
+
+Information on which runners actually started, did not finish (DNF), and where they dropped was not available. This may have aided even more perspective into the complex challenges this race presents and where the major obstacles are. 
+```{r}
+# Loading all the data sets
+dfHGRunners <- as.data.frame(read.csv("./2003-2014-hellgate-runner-data.csv"),strip.white=TRUE)
+dfHGFinishRate <- as.data.frame(read.csv("./2003-2014-hellgate-finish-rate.csv"))
+dfHGWeather <- as.data.frame(read.csv("./2003-2014-hellgate-weather-tidy.csv"))
+dfHGCourseCond <- as.data.frame(read.csv("./2003-2014-hellgate-course-conditions.csv"))
+dfHGBeastRunners <- as.data.frame(read.csv("./2008-2014-beast-finishers.csv"))
+
+# Removing some unused columns 
+dfHGWeather$station_name <- NULL
+dfHGBeastRunners$year <- NULL
+dfHGBeastRunners$name <- NULL
+dfHGBeastRunners$gender <- NULL
+
+# Creating a merged data set
+mergeRunners <- merge(dfHGRunners,dfHGBeastRunners,by.x=c("yearID","personID"), by.y=c("HG.yearID","personID"), all.x=TRUE)
+mergeCourse <- merge(dfHGFinishRate,dfHGCourseCond,by.x=c("date","yearID"), by.y=c("date","yearID")) 
+mergeCourse <- merge(mergeCourse,dfHGWeather,by.x=c("date","yearID"), by.y=c("date","yearID"))
+dfHG_all <- merge(mergeRunners,mergeCourse,by.x=c("date","yearID"), by.y=c("date","yearID"))
+
+# Add Beast Finisher as a factor variable (Y/N) 
+dfHG_all$beast.runner <- ifelse(is.na(dfHG_all$beast.time),"N", "Y")
+
+# returns string w/o leading whitespace
+trim.leading <- function (x)  sub("^\\s+", "", x) # (Ref: Trim Whitespace)
+dfHG_all$state <- trim.leading(as.character(dfHG_all$state))
+
+# Convert "date" to be understood as a date string in R, and time to a "duration" of number of seconds from the H:M:S format, then sort by date for human reading
+dfHG_all$date <- as.Date(dfHG_all$date, "%m/%d/%Y")
+dfHG_all$time <- as.duration(hms(dfHG_all$time))
+dfHG_all$beast.time <- as.duration(hms(dfHG_all$beast.time))
+dfHG_all$avg.min.per.mile <- as.duration(hms(dfHG_all$avg.min.per.mile))
+dfHG_all <- dfHG_all[order(dfHG_all$date),]
+
+#Load all beast series data, format time string to duration value
+beast <- as.data.frame(read.csv("./2008-2014-beast-series-data.csv"))
+beast$HL.50K <- as.duration(hms(beast$HL.50K))
+beast$T.MTN <- as.duration(hms(beast$T.MTN))
+beast$PL.50K <- as.duration(hms(beast$PL.50K))
+beast$GS.100 <- as.duration(hms(beast$GS.100))
+beast$MMTR <- as.duration(hms(beast$MMTR))
+beast$Hellgate <- as.duration(hms(beast$Hellgate))
+
+# References (see reference section for full Citation details):
+# Hellgate Data: Extreme Ultra Running
+# Beast Series data: Eco-XSPorts; Extreme Ultra Running
+# Weather: Weather Data: http://www.ncdc.noaa.gov/ 
+# Windchill Calculation: http://www.nws.noaa.gov/om/winter/windchill.shtml
+```
+
+# Basic Stats:
+Below are the basic stats on the race:
+
+## Time/Age Records
+Here are the male and female finishers' fastest/slowest times and youngest/oldest ages:
+
+Total finishes: 
+```{r}
+nrow(dfHG_all)
+```
+
+```{r}
+# Collect all the stats, then put in a dataframe 
+# .POSIXct (and time zone = GMT) needed to convert times back into a familiar format
+
+stat <- c("Total Finishes","Fastest Finish", "Longest Finish", "Average Time", 
+          "Youngest Finish", "Oldest Finish", "Average Age")
+
+male <- c(summary(dfHG_all$gender)[2],
+          (format(.POSIXct(min(dfHG_all$time[which(dfHG_all$gender=="M")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          (format(.POSIXct(max(dfHG_all$time[which(dfHG_all$gender=="M")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          (format(.POSIXct(mean(dfHG_all$time[which(dfHG_all$gender=="M")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          min(dfHG_all$age[which(dfHG_all$gender=="M")]),
+          max(dfHG_all$age[which(dfHG_all$gender=="M")]),
+          round(mean(dfHG_all$age[which(dfHG_all$gender=="M")]),1))
+
+female <- c( summary(dfHG_all$gender)[1],
+          (format(.POSIXct(min(dfHG_all$time[which(dfHG_all$gender=="F")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          (format(.POSIXct(max(dfHG_all$time[which(dfHG_all$gender=="F")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          (format(.POSIXct(mean(dfHG_all$time[which(dfHG_all$gender=="F")]), 
+          tz="GMT"), format="%H:%M:%S")),
+          min(dfHG_all$age[which(dfHG_all$gender=="F")]),
+          max(dfHG_all$age[which(dfHG_all$gender=="F")]),
+          round(mean(dfHG_all$age[which(dfHG_all$gender=="F")]),1))
+
+dfTimeAge <- data.frame(stat,male,female)
+
+dfTimeAge #display table
+```
+
+## Runners by state
+Looking at the distribution of runners from each state, top five states, totaling 71.1 percent of all finishes are from Virginia, Pennsylvania, Maryland, North Carolina, and Ohio:
+
+```{r}
+# Display top 5 states, runner count, and percentage of total runners from each
+dfStates <- as.data.frame(table(dfHG_all$state))
+colnames(dfStates) <- c("state","runner.count")
+dfStates$percent.by.state <- round(dfStates$runner.count/nrow(dfHG_all) * 100, digits=1)
+dfStates <- dfStates[order(-dfStates$runner.count),]
+head(dfStates,5)  # Display top 5
+sum(dfStates[, "percent.by.state"][1:5]) # Sum total of top five states
+```
+
+## Finish Percentage by Year
+The number of starters has increased from 71 (2003) to 148 (2014). The Number of finishers has also gone from 44 (2003) to 122 (2014). The best finish percentage was 88.1% in 2010.  Also show are the "First Timers" -- those whose first Hellgate finished in a success. Interestingly enough, there was a noticeable jump in 2010 in the total number of new runners. The fact that the highest finishing percentage and the largest number of new runners occurred in the same year is probably a coincidence, as there is not enough data to say otherwise.
+
+```{r}
+ggplot(dfHG_all, aes(date)) + 
+  geom_line(aes(y = starters, colour = "starters")) + 
+  geom_point(aes(y = starters, colour = "starters"),size=3, shape=1) +
+  geom_line(aes(y = finishers, colour = "finishers")) +
+  geom_point(aes(y = finishers, colour = "finishers"), size=3, shape=1) +
+  geom_line(aes(y = first.timers, colour = "first.timers")) +
+  geom_point(aes(y = first.timers, colour = "first.timers"), size=3, shape=1) +   
+  ylab("Number of Runners") +
+  xlab("Date")     
+```
+
+In 2011, the race registration format changed. Entry criteria required that each runner list the races they have done to "prove" they are able to complete Hellgate. A race committee then reviewed the applications to ensure runners had a good chance at finishing. It would appear that a "learning curve" with finishing may have occurred anyways, as more runners gained the benefit of race reports and prior Hellgate experience. Future race predictions would indicate a finish percentage in the low 80's, and the effect of the Race Committee might have stabilized the success rate of Hellgate in this area. This "learning curve" is represented by the smoothed line in the plot below:
+
+```{r}
+ggplot(dfHG_all, aes(date)) + 
+     stat_smooth(aes(y = finish.percent, group=1, colour="finish.percent"),
+     method=lm, formula = y ~ poly(x,2)) +
+     geom_point (aes(y = finish.percent, colour = "finish.percent"), size=3, shape=1) +
+     ylab("Finishing Percentage") +
+     xlab("Date")
+# Reference: Line Smoothing
+```
+
+## Weather Effects
+Hellgate can have some interesting weather, and the course conditions are dependent on many factors leading up to the race (snowfall, rain, cold/heat waves, etc). Weather data was obtained from the U.S. National Oceanic and Atmosphere Administration's (NOAA) National Climatic Data Center as measured from the Roanoke Regional Airport (Weather Data). No data existed for temperatures at higher elevations like Headforemost Mountain at mile 24/Aid Station 4, which is known as the coldest section of the course when runners reach it before dawn. 
+
+The Airport data was chosen because wind speed/direction is incredibly important for airplanes and was believed to be the best/most reliable source for this information. This was important in calculating wind chill by using the formula from the National Weather Service (Windchill Calculation). It should be noted that the formula was only applied when average wind speeds exceeded the 3 miles per hour (mph) threshold where it is considered valid (Windchill Calculation).
+
+The course conditions were recovered from the race reports, but mainly from the Race Director's (Dr. David Horton) account of the conditions (Extreme Ultra Running). 
+
+### Temperature
+Plotting the both the Temperature and the Wind Chill using the average wind speed and coldest observed temperature at Roanoke Regional Airport. The warmest start was 2004, but factoring in windchill, 2013 was the warmest year to date. The coldest years were 2007, tied with 2009 (20 degrees F). Factoring in windchill, 2007 was the coldest around 9 degrees F. 
+
+```{r}
+ggplot(dfHG_all, aes(date)) + 
+  geom_line(aes(y = min_temp_F, colour = "min_temp_F")) + 
+  geom_point(aes(y = min_temp_F, colour = "min_temp_F"),size=3, shape=1) +
+  geom_line(aes(y = avg_min_wind_chill, colour = "avg_min_wind_chill")) +
+  geom_point(aes(y = avg_min_wind_chill, 
+     colour = "avg_min_wind_chill"), size=3, shape=1) + 
+  ylab("Temperature (F)") +
+  xlab("Date")     
+```
+
+## Wind Direction
+Historical "wind direction" was not found in the data set so wind direction was determined by using the five minute wind gust direction as an estimate for the overall direction the air system was moving. The five minute wind gust is the highest sustained wind for a five minute period during the observation time. The data set contains direction in the form of degrees in a circular reference where east is zero degrees, north is ninety degrees, and so forth. Wind blowing in the south direction was the most common with five occurrences, north west the second most common with three: 
+
+```{r}
+ggplot(data=dfHGWeather, aes(five_min_wind_gust_direction, 
+     fill=five_min_wind_gust_direction)) +geom_bar()
+```
+
+## Course Conditions:
+Most of the time, the trails were clear. However, some years had ice or a mixture of snow and ice on the ground:
+
+```{r}
+ggplot(data=dfHGCourseCond, aes(trail.condition, 
+     fill=trail.condition)) +geom_bar()
+```
+
+# Statistical analysis
+
+## Plot of male versus female times
+Looking at the overall finishing times distributions by gender:
+
+```{r}
+cdf <- ddply(dfHG_all, "gender", summarise, time.mean=mean(time))
+ggplot(dfHG_all, aes(x=time, colour=gender)) + geom_density() +
+     geom_vline(data=cdf, aes(xintercept=time.mean,  colour=gender),
+                linetype="dashed", size=1)
+# (cookbook-r, histograms)
+```
+
+The time distributions are similar, but the median time is different. The shape is not too normal looking. Much of the data has this type of skew, mainly because a larger portion of the runners finish much later in the race. To prove non-normality, applying the Shapiro-Wilk and Anderson-Darling tests and confirming Q-Q plot produces the following for the Men's times:
+
+```{r}
+norm.test <- c("Shapiro-Wilk: ","Anderson-Darling: ")
+
+pvals <- c(shapiro.test(dfHG_all$time[which
+              (dfHG_all$gender=="M")]  )$p.value,
+          ad.test(dfHG_all$time[which
+              (dfHG_all$gender=="M")])$p.value)
+
+dfNormTest <- data.frame(norm.test,pvals)
+
+qqnorm(dfHG_all$time[which(dfHG_all$gender=="M")])
+
+dfNormTest #display table
+```
+
+Both normality tests generate incredibly small p values, rejecting normality. The Q-Q plot is very curved, where a normal one will follow a straight line. Therefore non-parametric tests are required to test for statistical significance.
+
+The non-parametric Mann-Whitney U Test (wilcox.test) is used and result in very small p-values to demonstrate a statistically significant different in male/female times: 
+
+```{r}
+a1 <- c("wilcox.test p-value:",wilcox.test(dfHG_all$time[which(dfHG_all$gender=="M")],dfHG_all$time[which(dfHG_all$gender=="F")])$p.value)
+
+a1 #display results
+```
+
+Because the p value is incredibly small, it is clear that there is a significant difference between male and female finishing time.
+
+## Plot of male versus female ages
+```{r}
+cdf <- ddply(dfHG_all, "gender", summarise, age.mean=mean(age))
+ggplot(dfHG_all, aes(x=age, colour=gender)) + geom_density() +
+     geom_vline(data=cdf, aes(xintercept=age.mean,  colour=gender),
+                linetype="dashed", size=1)
+# (cookbook-r, histograms)
+```
+
+The age distributions look identical, and normally distributed. Running a check on the normality for the Female ages yields the following:
+
+```{r}
+norm.test <- c("Shapiro-Wilk: ","Anderson-Darling: ")
+
+pvals <- c(shapiro.test(dfHG_all$age[which
+              (dfHG_all$gender=="F")]  )$p.value,
+          ad.test(dfHG_all$age[which
+              (dfHG_all$gender=="F")])$p.value)
+
+dfNormTest <- data.frame(norm.test,pvals)
+
+qqnorm(dfHG_all$age[which(dfHG_all$gender=="F")])
+
+dfNormTest #display table
+```
+
+The p values indicate normality, and the Q-Q plot confirms this. Therefore the Students T-test will be used. Based on the p value obtained below (0.49), there is no statistically significant difference between the ages within each group. 
+
+```{r}
+a1 <- c("t.test p-value:",t.test(dfHG_all$age[which(dfHG_all$gender=="M")],dfHG_all$age[which(dfHG_all$gender=="F")])$p.value)
+
+a1 # display results
+```
+
+## Age versus Hellgate Finishing Time
+Looking at overall age, older runners tend to take longer (on average) to finish. Obviously this is not a surprising result, but from the scatter of the data, the trend is very gradual, meaning that older runners are still very competitive.
+
+```{r}
+ggplot(dfHG_all, aes(x=age, y=time/3600, color=gender)) + geom_point(shape=1) +
+     geom_smooth(method=lm, se=TRUE, fullrange=T) +
+     xlab("Runner Age (years)") +
+     ylab("Hellgate Finish Time (hours)") 
+```
+
+
+## Age by race year, males vs females
+In general, for both genders, the trend is an older. There are many veterans that have been running this race for several years, meaning that a core group of steadily older persons may be driving the numbers. However, the change is not that great.
+
+```{r}
+ggplot(dfHG_all, aes(x=date, y=age, color=gender)) + geom_point(shape=1) +
+     geom_smooth(method=lm, se=TRUE, fullrange=T)+
+     xlab("Date") +
+     ylab("Runner Age (years)") 
+```
+
+## Times of men and women versus Hellgate finish time
+```{r}
+ggplot(dfHG_all, aes(x=date, y=time/3600, color=gender)) + geom_point(shape=1) +
+    geom_smooth(method=lm, se=TRUE, fullrange=T)+
+     xlab("Date") +
+     ylab("Finish Time (hours)") 
+```
+
+In the 2008 race, the standard error shown by the gray shaded area (95% confidence interval around the mean) for the men's mean finishing time is distinctly different than the women's mean time (plus standard error). Overall, the women's mean finishing time seems to hold flat or increase slightly. The men's time continues this trend for every race after. First compare the male/female times before 2008:
+
+```{r}
+cdf <- ddply(dfHG_all[which(dfHG_all$date<"2008-12-1"),], "gender", summarise, time.mean=mean(time/3600))
+ggplot(dfHG_all[which(dfHG_all$date<"2008-12-1"),], aes(x=time/3600, colour=gender)) + geom_density() +
+     geom_vline(data=cdf, aes(xintercept=time.mean,  colour=gender),
+     linetype="dashed", size=1) +
+     xlab("Hellgate Finish Time (hours)")
+# (cookbook-r, histograms)
+```
+
+Testing pre and post 2008 Male/Female time differences: 
+
+```{r}
+group <- c("2003-2007 p-value: ","2008-2014 p-value: ")
+
+males.vs.females <- c(wilcox.test(dfHG_all$time[which(dfHG_all$gender=="M" &
+          dfHG_all$date<"2008-12-1")],dfHG_all$time[which(dfHG_all$gender=="F" &
+          dfHG_all$date<"2008-12-1")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$gender=="M" & 
+          dfHG_all$date>"2008-12-1")],dfHG_all$time[which(dfHG_all$gender=="F" &
+          dfHG_all$date>"2008-12-1")])$p.value 
+     )
+
+pre.post.2008 <- data.frame(group,males.vs.females)
+
+pre.post.2008 #display results
+```
+
+Based on the p values obtained, for the first five years of the race (2003 - 2007) there is no significant difference between the male and female finishing times. After 2007, it's a different story, and the p-values are incredibly low, meaning that the males are significantly faster than females from 2008-2014.
+
+
+## Effect of Temperature on Finishing Percentage
+The temperature with the calculated wind chill was used to understand the apparent effects of temperature experienced by the runners and overall finish rate. It appears that there might be a correlation between temperature and finishing percentage as seen in this graph:
+
+```{r}
+eqn<-lm_eqn("Prediction Equation",dfHG_all,dfHG_all$avg_min_wind_chill,
+            dfHG_all$finish.percent)
+
+ggplot(dfHG_all, aes(x=avg_min_wind_chill, y=finish.percent)) + 
+     geom_point(shape=1) +
+     geom_smooth(method=lm, se=TRUE, fullrange=T) +
+     annotate("text",label=eqn,parse=TRUE, x=20,y=65) + 
+     xlab('Windchill Temperature (F) ') + 
+     ylab('Finish Percent')
+```
+
+It would appear that temperature might influence the finishing percent, albeit the R^2 value is a bit low. Looking at the residual plots:
+
+```{r}
+fit.finish.temp <- lm(finish.percent~avg_min_wind_chill,dfHG_all)
+par(mfrow=c(2,2))
+plot(fit.finish.temp)
+```
+
+The Q-Q plot shows the data is not normal and the Residual plot has a curved fit, meaning that there is non-linear behavior and this type of obvious pattern means it is a poor predictor. Therefore, it is determined that temperature is not a good predictor on the finishing rate.
+
+## Effect of Course Conditions on Finishing Time
+There are many factors that can influence the finishing times, including the overall course conditions. 
+
+Looking at a box-plot of times by course conditions, the average finishing times do not look that different, although the spread of the times appears to get more narrowly focused:
+
+```{r}
+ggplot(dfHG_all, aes(x=trail.condition, y=time/3600, fill=trail.condition)) +
+     geom_boxplot() +   
+     xlab('Trail Condition') +
+     ylab('Finish Time (hours)')
+```
+
+Looking at at histograms of each, they all look stacked on top of each other: 
+
+```{r}
+ggplot(dfHG_all, aes(x=time/3600, colour=trail.condition)) + 
+     geom_density() +
+     xlab('Finish Time (hours)')
+```
+
+The data appears to be non-normal. The "Clear" trail condition looks the most "rounded" like a bell curve, the others are more skewed to the right. Just to test this hypothesis, three methods are provided for the "Clear" data that demonstrate non-normality. The Shapiro-Wilk test and the Anderson-Darling tests combined with a Q-Q plot provides the results:
+
+```{r}
+norm.test <- c("Shapiro-Wilk: ","Anderson-Darling: ")
+
+pvals <- c(shapiro.test(dfHG_all$time[which
+              (dfHG_all$trail.condition=="clear")]  )$p.value,
+          ad.test(dfHG_all$time[which
+              (dfHG_all$trail.condition=="clear")])$p.value)
+
+dfNormTest <- data.frame(norm.test,pvals)
+
+qqnorm(dfHG_all$time[which(dfHG_all$trail.condition=="clear")])
+
+dfNormTest #display table
+```
+
+Because both normality tests combined with the Q-Q plot showing very curved behavior is observed, the data is considered to be non-normal and a non-parametric test must be used.
+
+Applying the Mann-Whitney U Test (a non-parametric test) to determine if any significant differences exist:
+
+```{r}
+comparison <- c("Clear vs. Ice: ","Clear vs. Snow-Ice: ", "Ice vs. Snow-Ice: ")
+
+pvals <- c(wilcox.test(dfHG_all$time[which(dfHG_all$trail.condition=="clear")],
+          dfHG_all$time[which(dfHG_all$trail.condition=="ice")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$trail.condition=="clear")],
+          dfHG_all$time[which(dfHG_all$trail.condition=="snow-ice")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$trail.condition=="ice")],
+          dfHG_all$time[which(dfHG_all$trail.condition=="snow-ice")])$p.value)
+
+dfCompare <- data.frame(comparison,pvals)
+
+dfCompare #display table
+```
+
+As seen from the p-values produced, none are significant (p<0.05), and therefore the conclusion is that trail conditions are a factor in influencing finish time is rejected.
+
+## Beast Series Analysis
+Because runners were faster overall after 2008, investigations into the Beast Series as a potential factor. While running the Beast Series did not appear to be a factor in influencing an overall faster time at Hellgate for those runners, it was thought that previous performance may predict a runners finish at Hellgate. 
+
+### Predicting Hellgate Time for the Beast Series runners
+Using the previous Beast time, can we predict the Hellgate finish time?
+
+Taking the Beast finishers, calculate their average time (pace) before, then see how well it compares to their Hellgate pace. 2013 was considered the "Mini-Beast" as the Grindstone 100 was cancelled due to the US Government shutdown that occurred. Total miles is normalized to pace/mile so the millage difference can be accounted for. Mileage is done with the "advertised" race distance, meaning that Hellgate is 62 miles, Grindstone is 100 miles, etc. The actual distances may be a little bit longer, but this difference does not affect the comparison, and was done for clarity or ease of use.
+
+```{r}
+subBeast <- dfHG_all[ which(!is.na(dfHG_all$total.miles)), ] #subset
+subBeast$time.before.HG <- subBeast$beast.time-subBeast$time #get time before
+subBeast$avg.time.before.HG <- (subBeast$time.before.HG/(subBeast$total.miles-62)) # get pace before HG
+
+# Getting the equation generated by the linear model
+eqn<-lm_eqn("Prediction Equation",subBeast,as.numeric(subBeast$avg.time.before.HG/60),as.numeric(subBeast$time/62/60))
+
+ggplot(data = subBeast, aes(x=avg.time.before.HG/60, y=time/62/60)) + geom_point(shape=1) + geom_smooth(method=lm, se=TRUE, fullrange=T) + annotate("text",label=eqn,parse=TRUE, x=14,y=11) + xlab('Pace Before Hellgate (min/mile)') + ylab('Hellgate Pace (min/mile)')
+```
+
+```{r}
+# Plotting the residuals
+lmBeast <- lm(as.numeric(subBeast$time/62/60)~as.numeric(subBeast$avg.time.before.HG/60),subBeast)
+
+par(mfrow=c(2,2))
+plot(lmBeast)
+```
+
+At first glance, this looks like a pretty good fit, but the R^2 value would indicate that the pave before Hellgate explains about 58% of the variation seen. The residual and Q-Q plots also look decent. 
+
+But, in the upper left, there appears to be a cluster of times that are much higher than what would be predicted. By looking at many different factors, including gender, temperature, number of times finishing Hellgate, and trail conditions, one thing stood out. The "snow-ice" year (2013) seems to explain that cluster as seen by the graph below:
+
+```{r}
+ggplot(subBeast, aes(x=avg.time.before.HG, y=time, color=trail.condition)) + geom_point(shape=1)
+```
+
+2013 certainly seems like a distinctly different year, as all of the finishing times are clustered above the others as seen in the above graph.
+
+Another factor is experience, not just running Hellgate but doing what it takes to finish the Beast Series. Looking at the veteran Beast series runners, by Beast Series Finishes:
+
+```{r}
+ggplot(subBeast, aes(x=avg.time.before.HG, y=time, color=as.factor(beast.times.finished))) + geom_point(shape=1)
+```
+
+Now let's highlight Hellgate Finishes instead, showing that veterans of Hellgate are scattered throughout:
+
+```{r}
+ggplot(subBeast, aes(x=avg.time.before.HG, y=time, color=as.factor(times.finished))) + geom_point(shape=1)
+```
+
+No distinct pattern from the number of Beast or Hellgate finishes is apparent. 
+
+2013 was also the year of the Govt shutdown, which forced Grindstone to be canceled. If years with and without Grindstone were treated separately, a better fit of the data is obtained:
+
+```{r}
+subBeast305 <- subBeast[which(subBeast$total.miles==305),]
+eqn.wGS <- lm_eqn("With Grindstone",subBeast305,as.numeric(subBeast305$avg.time.before.HG), as.numeric(subBeast305$time))
+
+subBeast205 <- subBeast[which(subBeast$total.miles==205),]
+eqn.nGS <- lm_eqn("No Grindstone",subBeast205,as.numeric(subBeast205$avg.time.before.HG), as.numeric(subBeast205$time))
+
+ggplot(subBeast, aes(x=avg.time.before.HG/60, y=time/3600, color=as.factor(total.miles))) + geom_point(shape=1) + geom_smooth(method=lm, se=TRUE, fullrange=F) + scale_colour_discrete(name  ="Group",labels=c("No Grindstone", "With Grindstone"))  + theme(legend.position=c(0.1, 0.85)) + annotate("text",label=eqn.wGS,parse=TRUE, x=13,y=11.5) + annotate("text",label=eqn.nGS,parse=TRUE, x=13,y=12.25) + xlab('Pace Before Hellgate (min/mile)') + ylab('Hellgate Finish Time (Hours)')
+```
+
+The prediction equation is significantly improved for each group. Training is important, and race experience on a tough course would have been good preparation. but a test to see if 2013 was statistically different needs to be done before removing the group from the sample.
+
+Another question on whether or not it was the trail conditions or lack of a big race prior to Hellgate was to blame. There were four years which had snow-ice conditions. Just Looking at the years with snow-ice, the year in question (Y11, 2013) as the second fastest average time:
+
+```{r}
+ggplot(dfHG_all[which(dfHG_all$trail.condition == "snow-ice"),], aes(x=yearID, y=time, fill=yearID)) + geom_boxplot()
+```
+
+Several comparisons of 2013 can be made. First whether or not 2013 was different than other Beast years and from other Hellgate years. Next, looking at trail conditions between other snow-ice years and the other clear and ice years too. Again for non-normality, statistical significance is done with the Mann-Whitney U test:
+
+```{r}
+comparison.labels <- c("2013 vs other Beast years", "2013 versus all Hellgate","2013 vs. Other Snow-Ice","Snow-Ice vs. Clear and Ice Years"  ) 
+
+comparison.pvals <- c(
+     wilcox.test(subBeast$time[which(subBeast$yearID=="Y11")],subBeast$time[which(!subBeast$yearID=="Y11")])$p.value,
+     wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y11")],dfHG_all$time[which(!dfHG_all$trail.condition=="Y11")])$p.value,
+     wilcox.test(dfHG_all$time[which(dfHG_all$trail.condition=="snow-ice" & dfHG_all$yearID=="Y11")],dfHG_all$time[which(dfHG_all$trail.condition=="snow-ice" & !dfHG_all$yearID=="Y11")])$p.value,
+   wilcox.test(dfHG_all$time[which(dfHG_all$trail.condition=="snow-ice")],dfHG_all$time[which(!dfHG_all$trail.condition=="snow-ice")])$p.value   
+   )
+
+y11.comps <- data.frame(comparison.labels, comparison.pvals)
+
+y11.comps #display results   
+```
+
+All of the p values are greater than 0.05, therefore there are no significant differences between the 2013 year and other Beast years, all other Hellgate years or between all other terrain conditions. Therefore, the 2013 group should not be treated as "outliers" in the data.
+
+
+### Comparing Beast Runners with other Hellgate Runners
+While the 2013 group may not be statistically different, looking at all Beast years is important to understand if any differences can be observed. A box-plot of the years with the Beast Series Runners compared to the rest of the Hellgate runners is below:
+
+```{r}
+ggplot(dfHG_all[which(dfHG_all$date>"2008-1-1"),], aes(x=as.factor(date), y=time, fill=beast.runner)) + geom_boxplot()
+```
+
+For each year, testing to see if there are any differences between Beast Runners and the rest of the runners:
+
+```{r}
+race.year <- c("2008","2009","2010","2011","2012","2013","2014")
+
+pvals <- c(
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y6" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y6" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y7" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y7" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y8" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y8" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y9" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y9" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y10" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y10" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y11" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y11" & dfHG_all$beast.runner=="N")])$p.value,
+          wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y12" 
+          & dfHG_all$beast.runner=="Y")],dfHG_all$time[which(dfHG_all$yearID=="Y12" & dfHG_all$beast.runner=="N")])$p.value    
+        )
+
+hg.vs.beast <- data.frame(race.year, pvals)
+
+hg.vs.beast #display results
+```
+
+In all years, the p values are greater than 0.05, meaning that there are no significant differences between Beast Runners and other Hellgate Runners.
+
+However, in 2011, the 9th year, the box-plot shows that the beast runners might have been significantly slower than their peers. There are some outliers in this group. A histogram of this year is below and a  statistical test would claim that the difference is not significant. Removing the outliers and re-running the test make this year significantly different, that the average Beast Runner was slower, on average, from the rest of the pack.
+
+
+```{r}
+ggplot(dfHG_all[which(dfHG_all$yearID=="Y9"),], aes(x=time, colour=beast.runner)) + geom_density() 
+```
+
+```{r}
+wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y9" & dfHG_all$beast.runner=="Y")], dfHG_all$time[which(dfHG_all$yearID=="Y9" & dfHG_all$beast.runner=="N")])
+```
+
+```{r}
+wilcox.test(dfHG_all$time[which(dfHG_all$yearID=="Y9" & dfHG_all$beast.runner=="Y" 
+& dfHG_all$time<52500)],dfHG_all$time[which(dfHG_all$yearID=="Y9" & 
+dfHG_all$beast.runner=="N")])
+```
+
+### Developing a better model: Beast Series Analysis
+Using the Total Beast time resulted in a 58% fit and the residual and Q-Q plots were decent, but it is an aggregate of all races. The three 50k races in the beginning of the year are mixed in and it may be possible to look more closely at each race leading up to Hellgate to determine if a better model can be produced.
+
+The Beast data was obtained from both Eco-XSports and Extreme Ultra Running, depending on the year (early years can only be found on Extreme Ultra Running). First, a linear model was fit using a combination of all the race finishing times. Next, using the "step" function in R, the software tests several combinations to determine the outcomes that are most significant and optimizes the model with the best parameters to form a prediction equation.
+
+```{r}
+beast.times <- data.frame(beast$HL.50K,beast$T.MTN, beast$PL.50K,beast$GS.100,beast$MMTR,beast$Hellgate)
+
+beast.times$beast.HL.50K <- as.numeric(beast.times$beast.HL.50K)
+beast.times$beast.T.MTN <- as.numeric(beast.times$beast.T.MTN)
+beast.times$beast.PL.50K <- as.numeric(beast.times$beast.PL.50K)
+beast.times$beast.GS.100 <- as.numeric(beast.times$beast.GS.100)
+beast.times$beast.MMTR <- as.numeric(beast.times$beast.MMTR)
+beast.times$beast.Hellgate <- as.numeric(beast.times$beast.Hellgate)
+
+all.beast.model <- lm(beast.Hellgate~.,beast.times)
+
+fit.beast <- step(all.beast.model,direction="both")
+
+summary(fit.beast)
+
+par(mfrow=c(2,2))
+
+plot(fit.beast)
+```
+
+The output indicates that the Grindstone and MMTR time are significant, but the addition of the Promise Land (PL.50K) factor seems weird. This was suspect to be "over fitting" and a new model with only the interaction of the Grindstone and MMTR results would be used.
+
+### Looking at the interaction of MMTR and GS100 to predict Hellgate Times:
+To begin, summaries of the linear fits to compare MMTR and Grindstone alone, as well as their interaction:
+
+```{r}
+summary(lm(Hellgate~MMTR,beast))
+summary(lm(Hellgate~GS.100,beast))
+summary(lm(Hellgate~MMTR*GS.100,beast))
+```
+
+*Note that the model excludes the missing GS100 values from the 2013 year when GS100 was cancelled due to the Govt Shutdown.*
+
+To Summarize the (adjusted) R^2 values:
+1) MMTR R^2 = .71
+2) GS100 R^2 = .654
+3) Interaction of MMTR and GS100 R^2 = .08075
+
+This means that the Hellgate data can be plotted against a new set of times from the combination of MMTR and GS100 based on the formula below: 
+
+*Hellgate time (predicted) = (-2.948e+04) + (1.897)MMTR.time + (5.684e-01)GS100.time + (-1.128e-05)*MMTR.time*GS100.time * 
+
+*Note that the coefficients from the interaction model were used.*
+
+Using the interaction equation, generating a plot and new model:
+
+```{r}
+# Run the interaction model to generate the data
+beast$mmtr.gs.model <- -2.948e+04+ 1.897*as.numeric(beast$MMTR)+5.684e-01*as.numeric(beast$GS.100) + -1.128e-05*as.numeric(beast$MMTR)*as.numeric(beast$GS.100)
+```
+
+```{r}
+# Getting the equation generated by the prediction model
+eqn<-lm_eqn("Prediction Equation",beast,as.numeric(beast$mmtr.gs.model/3600),as.numeric(beast$Hellgate/3600))
+
+#plotting the Hellgate time against the Model's predicted time 
+ggplot(beast,aes(x=as.numeric(mmtr.gs.model)/3600,y=as.numeric(Hellgate)/3600)) + geom_point(shape=1) + geom_smooth(method=lm, se=TRUE, fullrange=F) + annotate("text",label=eqn,parse=TRUE, x=15,y=11.5) + xlab('Predicted Hellgate Finish Time (Hours)') + ylab('Actual Hellgate Finish Time (Hours)')
+```
+
+Looking at the residual plots of the model to see if there are any biases or other abnormalities. While the X axis on the residual plot looks slightly unbalanced, it has no other obvious pattern. The Q-Q plot has good normality, so the model looks good:
+
+```{r}
+fit.HG.prediction <- lm(as.numeric(Hellgate)~mmtr.gs.model,beast)
+par(mfrow=c(2,2))
+plot(fit.HG.prediction)
+```
+
+Based on this result, the results from Grindstone and MMTR can be used reasonable well to predict Hellgate performance.
+
+# References
+1. cookbook-r (2015). Online resource. http://www.cookbook-r.com/Graphs/Plotting_distributions_(ggplot2)
+
+2. Eco-XSports (2015). Retrieved January, 2015 from www.eco-exsports.com
+
+3. Extreme Ultra Running (2015). Retrieved January 2015 from www.extremeultrarunning.com
+
+4. Jampen SC, Knechtle B, Rust CA, Lepers R, Rosemann T (2013). Increase in finishers and improvement of performance of masters runners in the Marathon des Sables. Int J Gen Med. 2013; 6: 427–438. http://dx.doi.org/10.2147/IJGM.S45265
+
+4. Regression Equation (2015). Retrieved on January 18,2015 from: http://stackoverflow.com/questions/7549694/ggplot2-adding-regression-line-equation-and-r2-on-graph
+
+5. Trim Whitespace (2015). Retrieved from http://stackoverflow.com/questions/2261079/how-to-trim-leading-and-trailing-whitespace-in-r on January 27, 2015
+
+6. Line Smoothing (2015). http://stats.stackexchange.com/questions/110380/smoother-lines-for-ggplot2. Retrieved January 28, 2015.
+
+7. UltraRunning Magazine (2013). 2013 UltraRunning participation by the numbers. Retrieved on February 10, 2015 from the website http://www.ultrarunning.com/featured/2013-ultrarunning-participation-by-the-numbers/
+
+7. Weather Data (2015). Menne, Matthew J., Imke Durre, Bryant Korzeniewski, Shelley McNeal, Kristy Thomas, Xungang Yin, Steven Anthony, Ron Ray, Russell S. Vose, Byron E.Gleason, and Tamara G. Houston (2012): Global Historical Climatology Network - Daily (GHCN-Daily), Version 3. Custom GHCN-Daily CSV: CITY:US510016 - Roanoke, VA US dates 12-1-2003 - 12-31-2014. NOAA National Climatic Data Center. doi:10.7289/V5D21VHZ Retrieved January 5, 2015.
+
+8. Windchill Calculation (2015). Retrieved January 2015 from http://www.nws.noaa.gov/om/winter/windchill.shtml
+
